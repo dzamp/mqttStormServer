@@ -1,0 +1,4 @@
+worker-id: ee7273cd-28dd-401f-9b97-2cd187559d04
+logs.users: []
+logs.groups: []
+topology.submitter.user: jim
