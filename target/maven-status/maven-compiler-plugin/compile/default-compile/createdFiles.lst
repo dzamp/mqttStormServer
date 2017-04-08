@@ -1,8 +1,0 @@
-health/monitor/WordCounter.class
-health/monitor/MqttMessageSpout.class
-ExclamationTopology$ExclamationBolt.class
-health/monitor/WordReader.class
-health/monitor/HealthMonitorMessage.class
-health/monitor/WordNormalizer.class
-ExclamationTopology.class
-TopologyMain.class
