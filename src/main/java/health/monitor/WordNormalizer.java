@@ -27,17 +27,17 @@ public class WordNormalizer extends BaseBasicBolt {
     public void execute(Tuple input, BasicOutputCollector collector) {
         MqttMessage message = (MqttMessage) input.getValue(0);
         String jsonMessage = message.toString();
-        ObjectMapper mapper = new ObjectMapper();
+//        ObjectMapper mapper = new ObjectMapper();
+//
+////JSON from file to Object
+//        HealthMonitorMessage obj= null;
+//        try {
+//            obj = mapper.readValue(jsonMessage, HealthMonitorMessage.class);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
-//JSON from file to Object
-        HealthMonitorMessage obj= null;
-        try {
-            obj = mapper.readValue(jsonMessage, HealthMonitorMessage.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        collector.emit(new Values(obj.getValue()));
+        collector.emit(new Values(jsonMessage));
 
     }
 

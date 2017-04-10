@@ -55,7 +55,8 @@ public class MqttMessageSpout implements IRichSpout, MqttCallback {
 
     @Override
     public void nextTuple() {
-     while(!messageStack.isEmpty()){
+        System.out.println("MqttMessageSpout.nextTuple");
+     if(!messageStack.isEmpty()){
          collector.emit(new Values(messageStack.pop()), messageStack.pop().hashCode());
      }
     }
@@ -99,6 +100,6 @@ public class MqttMessageSpout implements IRichSpout, MqttCallback {
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
+        System.out.println("MqttMessageSpout.deliveryComplete");
     }
 }
