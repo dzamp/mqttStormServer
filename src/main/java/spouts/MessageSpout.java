@@ -1,8 +1,6 @@
-package health.monitor;
+package spouts;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.log4j.Logger;
 import org.apache.storm.shade.org.eclipse.jetty.io.RuntimeIOException;
 import org.apache.storm.shade.org.eclipse.jetty.util.BlockingArrayQueue;
 import org.apache.storm.spout.SpoutOutputCollector;
@@ -11,10 +9,9 @@ import org.apache.storm.topology.IRichSpout;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
+import org.apache.storm.utils.Time;
 import org.eclipse.paho.client.mqttv3.*;
 
-import java.io.IOException;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.BlockingQueue;
@@ -22,9 +19,9 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Created by jim on 7/4/2017.
  */
-public class MqttMessageSpout implements IRichSpout, MqttCallback {
+public class MessageSpout implements IRichSpout, MqttCallback {
     SpoutOutputCollector collector;
-//    Logger log = Logger.getLogger(MessageSpout.class);
+    //    Logger log = Logger.getLogger(MessageSpout.class);
     MqttClient client;
     Stack<MqttMessage> messageStack;
     BlockingQueue<MqttMessage> messageQueue;
@@ -34,7 +31,7 @@ public class MqttMessageSpout implements IRichSpout, MqttCallback {
         System.out.println("MessageSpout.open");
         this.collector = spoutOutputCollector;
         try {
-            client = new MqttClient("tcp://workstation00.raspberryip.com:1883", "Sending");
+            client = new MqttClient("tcp://workstation00.raspberryip.com:1883", "Sending"+ Time.currentTimeMillis()); //persistence error?
             client.connect();
             client.setCallback(this);
             client.subscribe("blood_pressure");
@@ -61,23 +58,22 @@ public class MqttMessageSpout implements IRichSpout, MqttCallback {
 
     @Override
     public void nextTuple() {
-        while(true/*!messageQueue.isEmpty()*/) {
+        while (!messageQueue.isEmpty()) {
             MqttMessage message = null;
             try {
                 message = messageQueue.take();
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-            ObjectMapper mapper =  new ObjectMapper();
-            HealthMonitorMessage healthMessage = null;
-            try {
-                healthMessage = mapper.readValue(message.toString(), HealthMonitorMessage.class);
-            } catch (IOException e) {
-                e.printStackTrace();
             } finally {
-                if(healthMessage!=null) collector.emit(new Values(healthMessage));
+                if (message != null) {
+                    String[] values = message.toString().split(",");
+//                    for(int i=0; i< values.length; i++) values[i] = values[i].trim();
+                    System.out.println("Printing values " + values[0] + " " + values[1]);
+                    collector.emit(new Values(values[0],values[1]));
+                }
             }
         }
+
     }
 
     @Override
@@ -93,7 +89,7 @@ public class MqttMessageSpout implements IRichSpout, MqttCallback {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 //        outputFieldsDeclarer.declare(new Fields("word"));
-        outputFieldsDeclarer.declare(new Fields("word"));
+        outputFieldsDeclarer.declare(new Fields("id", "pressure_value"));
 
     }
 
@@ -116,7 +112,7 @@ public class MqttMessageSpout implements IRichSpout, MqttCallback {
 //        System.out.println("Message is " +s);
 //        System.out.println(mqttMessage.toString());
 //        System.out.println("String s is " + s);
-        System.out.println("Topic is " + s);
+//        System.out.println("Topic is " + s);
         messageQueue.put(mqttMessage);//.push(mqttMessage);
 //        nextTuple();
     }

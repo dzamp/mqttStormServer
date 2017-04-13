@@ -25,9 +25,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hbase.version>0.98.4-hadoop2</hbase.version>
-
-            <maven.compiler.source>1.8</maven.compiler.source>
-            <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -59,6 +58,17 @@
             <groupId>org.jmock</groupId>
             <artifactId>jmock</artifactId>
             <version>2.6.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.5</version>
             <scope>test</scope>
         </dependency>
 
@@ -99,7 +109,6 @@
         </dependency>
 
 
-
     </dependencies>
 
     <build>
@@ -113,6 +122,7 @@
 
                 <executions>
                     <execution>
+                        <!--<phase>package</phase>-->
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -124,16 +134,16 @@
                     <includeProjectDependencies>true</includeProjectDependencies>
                     <includePluginDependencies>false</includePluginDependencies>
                     <classpathScope>compile</classpathScope>
-                    <!-- allows you to specify which topology class to run by specifying -Dstorm.topology= on the command line -->
-                    <mainClass>ExclamationTopology</mainClass>
+                    <!-- allows you to specify which topology class to run by specifying -Dexec.MainClass= on the command line -->
+                    <mainClass>HealthMonitorTopology</mainClass>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>

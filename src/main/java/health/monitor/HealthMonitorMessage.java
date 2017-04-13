@@ -5,11 +5,15 @@ package health.monitor;
  */
 public class HealthMonitorMessage {
     public String patient_id;
-    public int value;
+    public int measurement;
+
+    public HealthMonitorMessage(){
+
+    }
 
     public HealthMonitorMessage(String id, int  value){
         this.patient_id = id;
-        this.value = value;
+        this.measurement = value;
     }
 
     public String getPatient_id() {
@@ -20,12 +24,12 @@ public class HealthMonitorMessage {
         this.patient_id = patient_id;
     }
 
-    public int getValue() {
-        return value;
+    public int getMeasurement() {
+        return measurement;
     }
 
-    public void setValue(int value) {
-        this.value = value;
+    public void setMeasurement(int measurement) {
+        this.measurement = measurement;
     }
 
     @Override

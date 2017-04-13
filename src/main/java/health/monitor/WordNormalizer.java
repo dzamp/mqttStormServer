@@ -15,7 +15,9 @@ import java.io.IOException;
 
 public class WordNormalizer extends BaseBasicBolt {
 
-    public void cleanup() {}
+    public void cleanup() {
+        System.out.println("WordNormalizer.cleanup");
+    }
 
     /**
      * The bolt will receive the line from the
@@ -25,6 +27,7 @@ public class WordNormalizer extends BaseBasicBolt {
      * and split the line to get all words in this
      */
     public void execute(Tuple input, BasicOutputCollector collector) {
+        System.out.println("WordNormalizer.execute");
         MqttMessage message = (MqttMessage) input.getValue(0);
         String jsonMessage = message.toString();
 //        ObjectMapper mapper = new ObjectMapper();
