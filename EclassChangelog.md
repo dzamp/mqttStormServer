@@ -59,4 +59,7 @@
 
  ### editpost.php  
   * we did the same here. We applied sanitization tehniques to the url parameters as well as htmlescapechars when rendering the editpost because the script could be executed on the admin side and take control of session.
-  Changes on lines 80 - 103 and changes on 354 & 362
+  Changes on lines 80 - 103 and changes on 354 & 362  
+
+  ## Changes in directory modules/dropbox for the exchange of files  
+  
