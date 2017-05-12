@@ -1,6 +1,9 @@
+import bolts.OxygenSaturationBolt;
+import bolts.PressureBolt;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
+import org.apache.storm.metric.HttpForwardingMetricsConsumer;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
@@ -11,20 +14,31 @@ public class HealthMonitorTopology {
     static volatile boolean keepRunning = true;
     public static final String HEALTH_SPOUT = "health-spout";
     public static final String PRESSURE_BOLT= "pressure-bolt";
+    public static final String OXYGEN_BOLT= "oxygen-bolt";
     public static final String EMERGENCY_BOLT= "emergency-bolt";
     public static final Thread mainThread = Thread.currentThread();
+
+
 
     public static void main(String[] args) throws Exception {
         System.out.println("HealthMonitorTopology.main");
         TopologyBuilder builder  =  new TopologyBuilder();
         /*set spout here */
         builder.setSpout(HEALTH_SPOUT, new MessageSpout(), 2);
-        builder.setBolt(PRESSURE_BOLT, new bolts.PressureBolt(), 5).fieldsGrouping(HEALTH_SPOUT, new Fields("id"));
-        builder.setBolt(EMERGENCY_BOLT, new bolts.EmergencyBolt(), 1).fieldsGrouping(PRESSURE_BOLT, new Fields("id"));
+        builder.setBolt(PRESSURE_BOLT, new PressureBolt(),2).fieldsGrouping(HEALTH_SPOUT, MessageSpout.PRESSURE_STREAM, new Fields("id"));
+        builder.setBolt(OXYGEN_BOLT, new OxygenSaturationBolt(),2).fieldsGrouping(HEALTH_SPOUT, MessageSpout.OXYGEN_STREAM, new Fields("id"));
+//        builder.setBolt(PRESSURE_BOLT, new bolts.PressureBolt(), 5).fieldsGrouping(HEALTH_SPOUT, new Fields("id"));
+//        builder.setBolt(OXYGEN_BOLT, new bolts.OxygenSaturationBolt(), 5).fieldsGrouping(HEALTH_SPOUT, new Fields("id"));
+        builder.setBolt(EMERGENCY_BOLT, new bolts.EmergencyBolt(), 5).fieldsGrouping(PRESSURE_BOLT, new Fields("id"));
 
         Config conf = new Config();
+
         conf.registerMetricsConsumer(org.apache.storm.metric.LoggingMetricsConsumer.class, 10);
         conf.setDebug(true);
+        conf.put("MONGO_DB","health_monitor");
+        conf.put("PRESSURE_WRITE_THRESHOLD","2");
+
+        // System.out.println("------------------------" + ObjectSizeCalculator.getObjectSize(conf));
 
         if (args != null && args.length > 0) {
             conf.setNumWorkers(3);

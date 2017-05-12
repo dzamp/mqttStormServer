@@ -26,8 +26,9 @@ public class EmergencyBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        List<?> values = (ArrayList<?>)tuple.getValue(1);
-        String id = tuple.getString(0);
+        ArrayList<Integer> values = (ArrayList<Integer>) tuple.getValue(1);
+        int id = tuple.getInteger(0);
+        System.out.println("PATIENT WITH ID " + id + "has reached critical levels, assume action ");
 //        if (this.id != id)throw new RuntimeIOException("WHAT IS THIS ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 //        System.out.println("Printing values of pressure prior emergency for partient with id " + id);
 //        values.forEach(s -> System.out.println(s));
