@@ -27,3 +27,10 @@ Premain-Class: mypackage.MyAgent
 Then, to create the jar, we execute the following command (it's usually worth creating a batch file or shell script with this line in case you need to re-build the agent jar several times):
 
 jar -cmf manifest.txt agent.jar mypackage/MyAgent.class
+
+jar -cvfm test.jar test.mf -C ./ .
+
+
+javac -cp ".:javassist-3.20.0-GA.jar" Agent.java ExecutionTimeTransformer.java
+ jar -cmf manifest.txt agent.jar Agent.class ExecutionTimeTransformer.class
+ java -javaagent:agent.jar -jar target/monitor-1.0-SNAPSHOT-jar-with-dependencies.jar

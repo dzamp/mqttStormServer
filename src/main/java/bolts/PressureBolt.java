@@ -4,7 +4,9 @@ package bolts;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.sun.org.apache.xpath.internal.SourceTree;
 import javafx.util.Pair;
+import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator;
 import org.apache.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -30,19 +32,27 @@ public class PressureBolt implements IRichBolt {
     protected HashMap<String, MongoCollection<Document>> mongoClientCollections;
     protected String MONGO_DB;
     protected int pressure_threshold = 0;
+    protected int pressure_emergency_threshold = 0;
+    protected Calendar calendar;
+    protected int lastPressurevalue;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this._collector = outputCollector;
+        this.log= Logger.getLogger(this.getClass());
         mongoClientCollections = new HashMap<>();
         pressureValues = new HashMap<>();
-        pressure_threshold = Integer.valueOf((String) map.get("PRESSURE_WRITE_THRESHOLD"));
+        pressure_threshold =  ((Long)map.get("PRESSURE_WRITE_THRESHOLD")).intValue();
+        pressure_emergency_threshold =((Long) map.get("PRESSURE_EMERGENCY_THRESHOLD")).intValue();
         MONGO_DB = (String) map.get("MONGO_DB");
         dbClient = new MongoClient();
         db = dbClient.getDatabase(MONGO_DB);
+        // calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT+3"));
         // coll =  db.getCollection("pressure");
 
     }
+
+
 
 
     //We have to think that each bolt deals with many messages regardless if they have the same id.
@@ -55,34 +65,42 @@ public class PressureBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        long timestamp = new Date().getTime();
+        // long timestamp =   calendar.getTime().getTime();
         String id = /*tuple.getString(0);*/ tuple.getString(0);
         boolean newlyCreated = Boolean.FALSE;
         if (!pressureValues.containsKey(id)) {
             newlyCreated = Boolean.TRUE;
             pressureValues.put(id, new ArrayList<>());
         }
-
-        int currentPressureValue = Integer.valueOf(tuple.getString(1));
+        long timestamp = tuple.getLong(2);
+        int currentPressureValue = tuple.getInteger(1);
         if (newlyCreated) {
+            lastPressurevalue = currentPressureValue;
             pressureValues.get(id).add(new Pair<>(currentPressureValue, timestamp));
-            coll = db.getCollection("pressure_" + id);
-            Document document = new Document("id", id).append("pressure", currentPressureValue).append("timestamp", timestamp);
-            coll.insertOne(document);
+            insertDocument(id,currentPressureValue, timestamp);
         }
         else {
-            int lastPressureValueOfCurrentPatient = pressureValues.get(id).get(pressureValues.get(id).size()).getKey();
+            int lastPressureValueOfCurrentPatient = pressureValues.get(id).get(pressureValues.get(id).size()-1).getKey();
             if (Math.abs(lastPressureValueOfCurrentPatient - currentPressureValue) > 2) {
                 pressureValues.get(id).add(new Pair<>(currentPressureValue, timestamp));
-                coll = db.getCollection("pressure_" + id);
-                Document document = new Document("id", id).append("pressure", currentPressureValue).append("timestamp", timestamp);
-                coll.insertOne(document);
+               insertDocument(id, currentPressureValue, timestamp);
             }
         }
-        if (currentPressureValue >= 120) {
+        if (currentPressureValue >= pressure_emergency_threshold) {
             log.info("BLOOD PRESSURE OF PATIENT WITH ID " + id + " has exceeded normal levels");
             _collector.emit(new Values(id, pressureValues.get(id)));
         }
+        if(ObjectSizeCalculator.getObjectSize(pressureValues)> 1000 * 1000 ){
+            log.info("MAX SIZE ");
+            pressureValues.clear();
+        }
+    }
+
+
+    public void insertDocument(String id, int pressureValue, long timestamp){
+        coll = db.getCollection("pressure_" + id);
+        Document document = new Document("id", id).append("pressure", pressureValue).append("timestamp", timestamp);
+        coll.insertOne(document);
     }
 
     @Override
@@ -91,10 +109,10 @@ public class PressureBolt implements IRichBolt {
     }
 
 
+
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declare(new Fields("id", "pressure_array"));
-
     }
 
     @Override

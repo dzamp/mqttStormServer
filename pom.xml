@@ -24,7 +24,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <hbase.version>0.98.4-hadoop2</hbase.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
@@ -106,6 +105,11 @@
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
             <version>1.0.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>3.20.0-GA</version>
+        </dependency>
 
 
     </dependencies>
@@ -153,7 +157,7 @@
                             <mainClass>HealthMonitorTopology</mainClass>
                         </manifest>
                         <!--<manifestEntries>-->
-                            <!--<Premain-Class>ObjectSizeCalculator</Premain-Class>-->
+                            <!--<Premain-Class>Agent</Premain-Class>-->
                         <!--</manifestEntries>-->
                     </archive>
                 </configuration>
