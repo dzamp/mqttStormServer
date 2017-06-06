@@ -16,9 +16,7 @@ import org.bson.Document;
 
 import java.util.*;
 
-/**
- * Created by jim on 5/5/2017.
- */
+
 public class TemperatureBolt implements IRichBolt{
     protected OutputCollector _collector;
     protected HashMap<String, List<Pair<Double, Long>>> temperatureValues;

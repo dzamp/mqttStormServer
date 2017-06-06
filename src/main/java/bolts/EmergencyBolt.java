@@ -49,11 +49,7 @@ public class EmergencyBolt implements IRichBolt {
         String id = tuple.getString(0);
         System.out.println("PATIENT WITH ID " + id + "has reached critical levels, assume action ");
         List<String> userCollections = returnUserCollections(id);
-        // for (Pair<? extends Number,Long> pair : patientValues ){
-        //     Number n = pair.getKey();
-        //     long timestamp = pair.getValue();
-        //     System.out.println("KEY : " + n + " VALUE " + timestamp);
-        // }
+
         long queryFromTimestamp = patientValues.get(patientValues.size()-1).getValue() - 3_600_000 * reportFromTime;
         for(String col:userCollections){
             MongoCollection<Document> collectionDocuments = db.getCollection(col);
