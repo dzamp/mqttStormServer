@@ -1,121 +1,67 @@
 package bolts;
 
-
-import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import javafx.util.Pair;
-import org.apache.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
-import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
-import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import org.bson.Document;
-import socket.SocketClient;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Created by jim on 4/5/2017.
+ * Created by jim on 6/6/2017.
  */
-public class PressureBolt implements IRichBolt {
-    public final static String REPLICA_REPORT_STREAM = "socket-replica-stream";
-    public final static String EMERGENCY_STREAM = "emergency-stream";
-    protected static int REPLICA_REPORT_THRESHOLD;
-    protected OutputCollector _collector;
-    protected HashMap<String, List<Pair<Integer, Long>>> pressureValues;
-    protected Logger log;
-    protected MongoClient dbClient;
-    protected MongoDatabase db;
-    protected MongoCollection<Document> coll;
-    protected String MONGO_DB;
+public class PressureBolt extends HealthBolt<Integer> {
+
     protected int pressure_threshold = 0;
     protected int pressure_emergency_threshold = 0;
-    protected int lastPressurevalue;
+
+
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-        this._collector = outputCollector;
-        this.log = Logger.getLogger(this.getClass());
-        pressureValues = new HashMap<>();
         pressure_threshold = ((Long) map.get("PRESSURE_WRITE_THRESHOLD")).intValue();
         pressure_emergency_threshold = ((Long) map.get("PRESSURE_EMERGENCY_THRESHOLD")).intValue();
-        MONGO_DB = (String) map.get("MONGO_DB");
-        REPLICA_REPORT_THRESHOLD = ((Long) map.get("REPLICA_REPORT_THRESHOLD")).intValue();
-        dbClient = new MongoClient();
-        db = dbClient.getDatabase(MONGO_DB);
+        super.prepare(map, topologyContext, outputCollector);
     }
-
-
-    //We have to think that each bolt deals with many messages regardless if they have the same id.
-    //I need to define an algorithmic way of knowing where to put the collection. A nice idea would be to use <whatAreWeMonitoring_clientID>
-    //so for patiend with id ae21efj23 we will use the collection pressure_ae21efj23
-
-    //We will write stuff whenever the max size of the map peaks to 1/2 M or 100KB we will see,
-    //or whenever the thread memory usage goes beyond a threshold
-
 
     @Override
-    public void execute(Tuple tuple) {
-        // long timestamp =   calendar.getTime().getTime();
-        String id = /*tuple.getString(0);*/ tuple.getString(0);
-        boolean newlyCreated = Boolean.FALSE;
-        if (!pressureValues.containsKey(id)) {
-            newlyCreated = Boolean.TRUE;
-            pressureValues.put(id, new ArrayList<>());
-        }
-        long timestamp = tuple.getLong(2);
-        int currentPressureValue = tuple.getInteger(1);
-        if (newlyCreated) {
-            lastPressurevalue = currentPressureValue;
-            pressureValues.get(id).add(new Pair<>(currentPressureValue, timestamp));
-            insertDocument(id, currentPressureValue, timestamp);
-            // socketClient.sendValues(id, currentPressureValue, timestamp);
-        } else {
-            int lastPressureValueOfCurrentPatient = (Integer) pressureValues.get(id).get(pressureValues.get(id).size() - 1).getKey();
-            if (Math.abs(lastPressureValueOfCurrentPatient - currentPressureValue) > 2) {
-                pressureValues.get(id).add(new Pair<>(currentPressureValue, timestamp));
-                insertDocument(id, currentPressureValue, timestamp);
-            }
-        }
-        if (currentPressureValue >= pressure_emergency_threshold) {
-            log.info("BLOOD PRESSURE OF PATIENT WITH ID " + id + " has exceeded normal levels");
-            _collector.emit(EMERGENCY_STREAM,new Values(id, pressureValues.get(id)));
-        }
-        if (pressureValues.get(id).size() >= REPLICA_REPORT_THRESHOLD) { // 1000 * 1000 = 1MB
-            log.info("MAX SIZE ");
-            //send to other stream here
-            // socketClient.sendValues("pressure", id, pressureValues.get(id));
-            _collector.emit(REPLICA_REPORT_STREAM, new Values("pressure", id, pressureValues.get(id)));
-            pressureValues.clear();
-        }
-
+    protected HashMap<String, List<Pair<Integer, Long>>> setValues() {
+        return new HashMap<>();
     }
 
+    @Override
+    public void emitEmergencyValues(String id, Integer currentValue) {
+        if(currentValue > pressure_emergency_threshold){
+            log.info("BLOOD PRESSURE OF PATIENT WITH ID " + id + " has exceeded normal levels");
+            _collector.emit(EMERGENCY_STREAM, new Values(id, values.get(id)));
+        }
+    }
 
-    public void insertDocument(String id, int pressureValue, long timestamp) {
-        coll = db.getCollection("pressure_" + id);
-        Document document = new Document("id", id).append("pressure", pressureValue).append("timestamp", timestamp);
+    @Override
+    public void compareDeltaThreshold(String id, Integer currentValue, long timestamp) {
+        int lastValueOfCurrentPatient = values.get(id).get(values.get(id).size() - 1).getKey();
+        if (Math.abs(currentValue - lastValueOfCurrentPatient) >= pressure_emergency_threshold ) {
+            values.get(id).add(new Pair<>(currentValue, timestamp));
+            insertDocument(id, currentValue, timestamp);
+        }
+    }
+
+    @Override
+    public void insertDocument(String id, Integer currentValue, long timestamp) {
+        MongoCollection<Document> coll = db.getCollection("pressure_" + id);
+        Document document = new Document("id", id).append("pressure", currentValue).append("timestamp", timestamp);
         coll.insertOne(document);
     }
 
     @Override
-    public void cleanup() {
-
-    }
-
-
-    @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "pressure_array"));
-        outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields( "topic", "id", "pressure_array"));
-    }
-
-    @Override
-    public Map<String, Object> getComponentConfiguration() {
-        return null;
+        outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields("topic", "id", "pressure_array"));
     }
 }
