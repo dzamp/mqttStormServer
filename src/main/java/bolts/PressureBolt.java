@@ -22,7 +22,6 @@ public class PressureBolt extends HealthBolt<Integer> {
     protected int pressure_emergency_threshold = 0;
 
 
-
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         pressure_threshold = ((Long) map.get("PRESSURE_WRITE_THRESHOLD")).intValue();
@@ -37,16 +36,16 @@ public class PressureBolt extends HealthBolt<Integer> {
 
     @Override
     public void emitEmergencyValues(String id, Integer currentValue) {
-        if(currentValue > pressure_emergency_threshold){
+        if (currentValue > pressure_emergency_threshold) {
             log.info("BLOOD PRESSURE OF PATIENT WITH ID " + id + " has exceeded normal levels");
-            _collector.emit(EMERGENCY_STREAM, new Values(id, values.get(id)));
+            _collector.emit(EMERGENCY_STREAM, new Values(id, values.get(id), currentValue, "pressure"));
         }
     }
 
     @Override
     public void compareDeltaThreshold(String id, Integer currentValue, long timestamp) {
         int lastValueOfCurrentPatient = values.get(id).get(values.get(id).size() - 1).getKey();
-        if (Math.abs(currentValue - lastValueOfCurrentPatient) >= pressure_emergency_threshold ) {
+        if (Math.abs(currentValue - lastValueOfCurrentPatient) >= pressure_threshold) {
             values.get(id).add(new Pair<>(currentValue, timestamp));
             insertDocument(id, currentValue, timestamp);
         }
@@ -61,7 +60,7 @@ public class PressureBolt extends HealthBolt<Integer> {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "pressure_array"));
-        outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields("topic", "id", "pressure_array"));
+        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "pressure_array", "emergency_value", "topic"));
+        outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields("topic", "id", "pressure_values"));
     }
 }

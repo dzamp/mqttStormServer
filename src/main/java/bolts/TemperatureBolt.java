@@ -37,7 +37,7 @@ public class TemperatureBolt extends HealthBolt<Double> {
     public void emitEmergencyValues(String id, Double currentValue) {
         if(currentValue > temperature_emergency_threshold){
             log.info("TEMPERATURE OF PATIENT WITH ID " + id + " has exceeded normal levels");
-            _collector.emit(EMERGENCY_STREAM, new Values(id, values.get(id)));
+            _collector.emit(EMERGENCY_STREAM, new Values( id, values.get(id),  currentValue, "temperature"));
         }
     }
 
@@ -59,7 +59,7 @@ public class TemperatureBolt extends HealthBolt<Double> {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "temperature_array"));
+        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "temperature_array","topic", "emergency_value"));
         outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields("topic", "id", "temperature_array"));
     }
 }

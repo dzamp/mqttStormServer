@@ -36,7 +36,7 @@ public class OxygenSaturationBolt extends HealthBolt<Integer> {
     public void emitEmergencyValues(String id, Integer currentValue) {
         if(currentValue < oxygen_emergency_threshold){
             log.info("OXYGEN SATURATION OF PATIENT WITH ID " + id + " has exceeded normal levels");
-            _collector.emit(EMERGENCY_STREAM, new Values(id, values.get(id)));
+            _collector.emit(EMERGENCY_STREAM, new Values(id, values.get(id),currentValue, "oxygen"));
         }
     }
 
@@ -58,7 +58,7 @@ public class OxygenSaturationBolt extends HealthBolt<Integer> {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "oxygen_array"));
+        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "oxygen_array", "topic", "emergency_value"));
         outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields("topic", "id", "oxygen_array"));
     }
 }

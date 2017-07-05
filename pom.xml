@@ -71,17 +71,6 @@
             <artifactId>mongo-java-driver</artifactId>
             <version>3.4.0</version>
         </dependency>
-
-        <!--<dependency>-->
-            <!--<groupId>ch.qos.logback</groupId>-->
-            <!--<artifactId>logback-classic</artifactId>-->
-            <!--<version>1.1.7</version>-->
-        <!--</dependency>-->
-        <!--
-        normally including 'storm-server' is OK for LocalCluster,
-        but 'storm-starter' also uses clojure implementation
-        so 'storm-starter' needs to include 'storm-core'
-        -->
         <dependency>
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-core</artifactId>

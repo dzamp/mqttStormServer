@@ -91,9 +91,7 @@ public class TemperatureSpout implements IRichSpout, MqttCallback {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         }
-
     }
 
     @Override
