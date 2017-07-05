@@ -27,8 +27,6 @@ public class EmergencyBolt implements IRichBolt {
     protected MongoDatabase db;
     protected int reportFromTime;
     OutputCollector _collector;
-    String id;
-    Block<Document> printBlock;
     SocketChannel client;
 
     @Override
@@ -37,12 +35,6 @@ public class EmergencyBolt implements IRichBolt {
         dbClient = new MongoClient();
         db = dbClient.getDatabase("health_monitor");
         reportFromTime = Integer.valueOf((String) map.get("EMERGENCY_REPORT_TIME"));
-        printBlock = new Block<Document>() {
-            @Override
-            public void apply(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
         InetSocketAddress hostAddress = new InetSocketAddress("localhost", 8100);
         try {
             client = SocketChannel.open(hostAddress);

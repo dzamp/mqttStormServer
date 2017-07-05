@@ -27,6 +27,9 @@ public class HealthMonitorTopology {
     static volatile boolean keepRunning = true;
 
     public static void main(String[] args) throws Exception {
+        // MongoConnectorProcess mongoConnectorProcess = new MongoConnectorProcess("");
+        // mongoConnectorProcess.runJar();
+
         PropertyFileLoader propertyFileLoader = new PropertyFileLoader();
         String ArrayofAddresses = propertyFileLoader.getProperty("ADDRESSES");
         ArrayList<String> addressesList = null;
@@ -90,6 +93,7 @@ public class HealthMonitorTopology {
                 public void run() {
                     System.out.println("Shutdown--------------------------");
                     keepRunning = false;
+                    // mongoConnectorProcess.destroyProcess();
                     try {
                         mainThread.join();
                     } catch (InterruptedException e) {
