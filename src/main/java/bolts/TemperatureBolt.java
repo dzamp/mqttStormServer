@@ -59,7 +59,7 @@ public class TemperatureBolt extends HealthBolt<Double> {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "temperature_array","topic", "emergency_value"));
+        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "temperature_array","emergency_value", "topic"));
         outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields("topic", "id", "temperature_array"));
     }
 }

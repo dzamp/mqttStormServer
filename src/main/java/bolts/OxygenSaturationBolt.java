@@ -58,7 +58,7 @@ public class OxygenSaturationBolt extends HealthBolt<Integer> {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "oxygen_array", "topic", "emergency_value"));
+        outputFieldsDeclarer.declareStream(EMERGENCY_STREAM, new Fields("id", "oxygen_array","emergency_value", "topic"));
         outputFieldsDeclarer.declareStream(REPLICA_REPORT_STREAM, new Fields("topic", "id", "oxygen_array"));
     }
 }
