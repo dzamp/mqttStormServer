@@ -31,16 +31,7 @@ public class HealthMonitorTopology {
         // mongoConnectorProcess.runJar();
 
         PropertyFileLoader propertyFileLoader = new PropertyFileLoader();
-        String ArrayofAddresses = propertyFileLoader.getProperty("ADDRESSES");
-        ArrayList<String> addressesList = null;
-        if (ArrayofAddresses.contains("%")) {
-            String[] addresses = ArrayofAddresses.split("%");
-            addressesList = new ArrayList<>(Arrays.asList(addresses));
-        }
-        else {
-            addressesList = new ArrayList<>();
-            addressesList.add(ArrayofAddresses);
-        }
+
 
         Config conf = new Config();
         conf.registerMetricsConsumer(org.apache.storm.metric.LoggingMetricsConsumer.class, 10);
@@ -55,7 +46,7 @@ public class HealthMonitorTopology {
         conf.put("REPLICA_REPORT_THRESHOLD", Integer.valueOf(propertyFileLoader.getProperty("REPLICA_REPORT_THRESHOLD")));
         conf.put("EMERGENCY_REPORT_TIME", propertyFileLoader.getProperty("EMERGENCY_REPORT_TIME")); //set hours here
         conf.put("SOCKET_CONNECTION_PORT", Integer.valueOf(propertyFileLoader.getProperty("SOCKET_CONNECTION_PORT")));
-
+        conf.put("MY_IP",propertyFileLoader.getProperty("MY_IP"));
         TopologyBuilder builder = new TopologyBuilder();
 
         /*set spout here */
@@ -73,9 +64,9 @@ public class HealthMonitorTopology {
 //        builder.setBolt(OXYGEN_BOLT, new bolts.OxygenSaturationBolt(), 5).fieldsGrouping(PRESSURE_SPOUT, new Fields("id"));
 
 
-        builder.setBolt(REPLICA_BOLT, new SocketClientBolt(new String[]{"localhost"}), 2).shuffleGrouping(PRESSURE_BOLT, HealthBolt.REPLICA_REPORT_STREAM);
-        builder.setBolt(REPLICA_BOLT + "1", new SocketClientBolt(new String[]{"localhost"}), 2).shuffleGrouping(OXYGEN_BOLT, HealthBolt.REPLICA_REPORT_STREAM);
-        builder.setBolt(REPLICA_BOLT + "2", new SocketClientBolt(new String[]{"localhost"}), 2).shuffleGrouping(TEMPERATURE_BOLT, HealthBolt.REPLICA_REPORT_STREAM);
+        builder.setBolt(REPLICA_BOLT, new ReplicationBolt(), 2).shuffleGrouping(PRESSURE_BOLT, HealthBolt.REPLICA_REPORT_STREAM);
+        builder.setBolt(REPLICA_BOLT + "1", new ReplicationBolt(), 2).shuffleGrouping(OXYGEN_BOLT, HealthBolt.REPLICA_REPORT_STREAM);
+        builder.setBolt(REPLICA_BOLT + "2", new ReplicationBolt(), 2).shuffleGrouping(TEMPERATURE_BOLT, HealthBolt.REPLICA_REPORT_STREAM);
 
         // builder.setBolt(EMERGENCY_BOLT, new bolts.EmergencyBolt(), 2).fieldsGrouping(TEMPERATURE_BOLT, new Fields("id"));
         builder.setBolt(EMERGENCY_BOLT, new bolts.EmergencyBolt(), 2).fieldsGrouping(PRESSURE_BOLT, PressureBolt.EMERGENCY_STREAM, new Fields("id"));

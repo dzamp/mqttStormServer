@@ -25,9 +25,8 @@ public class SocketClientBolt implements IRichBolt {
     private ArrayList<SocketChannel> clients = null;
 
 
-    public SocketClientBolt(String[] clients){
-        this.addresses = new ArrayList<>();
-        this.addresses.addAll(Arrays.asList(clients));
+    public SocketClientBolt(ArrayList<String> addresses){
+        this.addresses = addresses;
     }
 
     @Override
