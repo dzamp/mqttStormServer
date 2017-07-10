@@ -22,14 +22,8 @@ import java.util.concurrent.BlockingQueue;
  * Created by jim on 7/4/2017.
  */
 public class TemperatureSpout implements IRichSpout, MqttCallback {
-    //    Logger log = Logger.getLogger(PressureSpout.class);
-    // public final static String PRESSURE_STREAM = "pressureStream";
-    // public final static String PRESSURE_TOPIC = "health_monitor/blood_pressure";
     public final static String TEMPERATURE_TOPIC = "health_monitor/temperature";
     public final static String TEMPERATURE_STREAM = "temperatureStream";
-    // public final static String OXYGEN_STREAM = "oxygenStream";
-    // public final static String OXYGEN_TOPIC = "health_monitor/oxygen_saturation";
-    // public final static String CLIENT_SUBSCRIBE = "health_monitor/subscribe_client";
     private  String MONGO_DB;
     protected MongoClient dbClient;
     protected MongoDatabase db;

@@ -1,6 +1,5 @@
 package bolts;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
@@ -10,12 +9,11 @@ import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Tuple;
-import org.bson.Document;
+import org.apache.storm.utils.Time;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.util.*;
 
 
@@ -27,7 +25,9 @@ public class EmergencyBolt implements IRichBolt {
     protected MongoDatabase db;
     protected int reportFromTime;
     OutputCollector _collector;
-    SocketChannel client;
+    public final static String GUI_TOPIC = "health_monitor/gui";
+    public String GUI_IP;
+    MqttClient client = null;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
@@ -35,12 +35,16 @@ public class EmergencyBolt implements IRichBolt {
         dbClient = new MongoClient();
         db = dbClient.getDatabase("health_monitor");
         reportFromTime = Integer.valueOf((String) map.get("EMERGENCY_REPORT_TIME"));
-        InetSocketAddress hostAddress = new InetSocketAddress("localhost", 8100);
+        this.GUI_IP = map.get("GUI_IP").toString();
+        client = null;
         try {
-            client = SocketChannel.open(hostAddress);
-        } catch (IOException e) {
+            client = new MqttClient("tcp://" + this.GUI_IP + ":1883", "Sending"+ Time.currentTimeMillis());
+            client.connect();
+            // client.subscribe(GUI_TOPIC, 1);
+        } catch (MqttException e) {
             e.printStackTrace();
         }
+
     }
 
     @Override
@@ -50,40 +54,13 @@ public class EmergencyBolt implements IRichBolt {
         String id = tuple.getString(0);
         System.out.println("PATIENT WITH ID " + id + " has reached critical levels, assume action ");
         List<String> userCollections = returnUserCollections(id);
-
-        // long queryFromTimestamp = patientValues.get(patientValues.size() - 1).getValue() - 3_600_000 * reportFromTime;
-        // long queryFromTimestamp = patientValues.get(patientValues.size() - 1).getValue() - 60 * 60 * reportFromTime;
-        // for (String col : userCollections) {
-        //     MongoCollection<Document> collectionDocuments = db.getCollection(col);
-        //     FindIterable<Document> correctValues = collectionDocuments.find(gt("timestamp", queryFromTimestamp)).sort(new Document("timestamp", 1));
-        //     correctValues.forEach(printBlock);
-        //     String output = "";
-        //     Iterator<Document> iterator = correctValues.iterator();
-        //     while (iterator.hasNext()) {
-        //         String topics[] = col.split("_");
-        //         String topic = topics[0].trim();
-        //         Document doc = iterator.next();
-        //         output = output.concat(topic.trim() + "%" + tuple.getValue(0).toString() + "%" + doc.get(topic.trim()) + "%" + doc.get("timestamp") + "\n");
-        //     }
-        //     ByteBuffer buffer = null;
-        //     buffer = ByteBuffer.wrap(output.getBytes());
-        //     try {
-        //         client.write(buffer);
-        //     } catch (IOException e) {
-        //         e.printStackTrace();
-        //     }
-        // }
-
         sendEmergencyValueOnlytoGui(patientValues, userCollections, tuple);
-
-
     }
 
     private void sendEmergencyValueOnlytoGui(ArrayList<Pair<? extends Number, Long>> patientValues, List<String> userCollections, Tuple tuple) {
         long queryFromTimestamp = patientValues.get(patientValues.size() - 1).getValue() - 60 * reportFromTime;
         Number n = null;
         String output = "";
-
         n = (Number) tuple.getValueByField("emergency_value");
         for (int i =0; i< patientValues.size(); i++) {
             String pressure_value = String.valueOf(patientValues.get(i).getKey());
@@ -93,33 +70,18 @@ public class EmergencyBolt implements IRichBolt {
             }
         }
 
-        ByteBuffer buffer = null;
-        buffer = ByteBuffer.wrap(output.getBytes());
+        MqttMessage message = new MqttMessage(output.getBytes());
         try {
-            client.write(buffer);
-        } catch (IOException e) {
-            e.printStackTrace();
+            client.publish(GUI_TOPIC, message);
+        } catch (MqttException me) {
+            System.out.println("reason "+me.getReasonCode());
+            System.out.println("msg "+me.getMessage());
+            System.out.println("loc "+me.getLocalizedMessage());
+            System.out.println("cause "+me.getCause());
+            System.out.println("excep "+me);
+            me.printStackTrace();
         }
 
-        // for (String col : userCollections) {
-        //     MongoCollection<Document> collectionDocuments = db.getCollection(col);
-        //     FindIterable<Document> correctValues = collectionDocuments.find(gt("timestamp", queryFromTimestamp)).sort(descending("pressure"));
-        //     Iterator<Document> iterator = correctValues.iterator();
-        //     String output = "";
-        //     if (iterator.hasNext()) {
-        //         String topics[] = col.split("_");
-        //         String topic = topics[0].trim();
-        //         Document doc = iterator.next();
-        //         output = output.concat(topic.trim() + "%" + tuple.getValue(0).toString() + "%" + doc.get(topic.trim()) + "%" + doc.get("timestamp") + "\n");
-        //     }
-        //     ByteBuffer buffer = null;
-        //     buffer = ByteBuffer.wrap(output.getBytes());
-        //     try {
-        //         client.write(buffer);
-        //     } catch (IOException e) {
-        //         e.printStackTrace();
-        //     }
-        // }
     }
 
     private List<String> returnUserCollections(final String id) {

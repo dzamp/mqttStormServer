@@ -32,19 +32,13 @@ public class ReplicationBolt implements IRichBolt {
     protected MqttClient client;
     public final static String REPLICATION_TOPIC = "health_monitor/replication";
     public  String MY_IP;
+    public  String REPLICATION_IP;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this._collector = outputCollector;
         this.MY_IP = map.get("MY_IP").toString();
-        try {
-//            client = new MqttClient("tcp://workstation00.raspberryip.com:1883", "Sending"+ Time.currentTimeMillis()); //persistence error?
-            client = new MqttClient("tcp://localhost:1883", "Sending"+ Time.currentTimeMillis());
-            client.connect();
-            client.subscribe(REPLICATION_TOPIC, 1);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
+        this.REPLICATION_IP = map.get("REPLICATION_IP").toString();
     }
 
     @Override
@@ -55,6 +49,15 @@ public class ReplicationBolt implements IRichBolt {
         String payload = topic + "\n" + id + "\n";
         StringBuilder builder = new StringBuilder(MY_IP + "\n" + topic + "\n" + id + "\n");
         int i = 0;
+        MqttClient client = null;
+        try {
+            client = new MqttClient("tcp://" + this.REPLICATION_IP + ":1883", "Sending"+ Time.currentTimeMillis());
+            client.connect();
+            client.subscribe(REPLICATION_TOPIC, 1);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+
         for (i = 0; i < values.size(); i++) {
             builder.append(String.valueOf(values.get(i).getKey()) + "," + String.valueOf(values.get(i).getValue()) + "%");
         }

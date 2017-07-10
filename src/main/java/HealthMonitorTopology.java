@@ -46,6 +46,8 @@ public class HealthMonitorTopology {
         conf.put("REPLICA_REPORT_THRESHOLD", Integer.valueOf(propertyFileLoader.getProperty("REPLICA_REPORT_THRESHOLD")));
         conf.put("EMERGENCY_REPORT_TIME", propertyFileLoader.getProperty("EMERGENCY_REPORT_TIME")); //set hours here
         conf.put("MY_IP",propertyFileLoader.getProperty("MY_IP"));
+        conf.put("REPLICATION_IP",propertyFileLoader.getProperty("REPLICATION_IP"));
+        conf.put("GUI_IP",propertyFileLoader.getProperty("GUI_IP"));
         TopologyBuilder builder = new TopologyBuilder();
 
         /*set spout here */
