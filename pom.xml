@@ -75,7 +75,7 @@
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-core</artifactId>
             <version>1.1.0</version>
-            <!--<scope>provided</scope>-->
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -100,83 +100,141 @@
             <version>3.20.0-GA</version>
         </dependency>
         <dependency>
-            <groupId>health</groupId>
-            <artifactId>monitor</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>flux-core</artifactId>
+            <version>1.1.0</version>
         </dependency>
+        <!-- Flux Wrappers include -->
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>flux-wrappers</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>health</groupId>-->
+            <!--<artifactId>monitor</artifactId>-->
+            <!--<version>1.0-SNAPSHOT</version>-->
+        <!--</dependency>-->
 
 
     </dependencies>
-
     <build>
-        <sourceDirectory>src/main/java</sourceDirectory>
-        <!--<testSourceDirectory>src/test/java</testSourceDirectory>-->
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
-
-                <executions>
-                    <execution>
-                        <!--<phase>package</phase>-->
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-
-                    <executable>java</executable>
-
-                    <includeProjectDependencies>true</includeProjectDependencies>
-                    <includePluginDependencies>false</includePluginDependencies>
-                    <classpathScope>compile</classpathScope>
-                    <!-- allows you to specify which topology class to run by specifying -Dexec.MainClass= on the command line -->
-                    <mainClass>HealthMonitorTopology</mainClass>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.2</version>
                 <configuration>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                     <archive>
-                        <index>true</index>
                         <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                            <mainClass>HealthMonitorTopology</mainClass>
+                            <mainClass>HealthMonitorTopologyDemo</mainClass>
                         </manifest>
-                        <!--<manifestEntries>-->
-                            <!--<Premain-Class>Agent</Premain-Class>-->
-                        <!--</manifestEntries>-->
                     </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>1.4</version>
+                <configuration>
+                    <createDependencyReducedPom>true</createDependencyReducedPom>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
-                        <!-- this is used for inheritance merges -->
                         <phase>package</phase>
-                        <!-- append to the packaging phase. -->
                         <goals>
-                            <goal>single</goal>
-                            <!-- goals == mojos -->
+                            <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.apache.storm.flux.Flux</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
+
+
+
+    <!--<build>-->
+    <!--<sourceDirectory>src/main/java</sourceDirectory>-->
+    <!--&lt;!&ndash;<testSourceDirectory>src/test/java</testSourceDirectory>&ndash;&gt;-->
+    <!--<plugins>-->
+    <!--<plugin>-->
+    <!--<groupId>org.codehaus.mojo</groupId>-->
+    <!--<artifactId>exec-maven-plugin</artifactId>-->
+    <!--<version>1.2.1</version>-->
+
+    <!--<executions>-->
+    <!--<execution>-->
+    <!--&lt;!&ndash;<phase>package</phase>&ndash;&gt;-->
+    <!--<goals>-->
+    <!--<goal>exec</goal>-->
+    <!--</goals>-->
+    <!--</execution>-->
+    <!--</executions>-->
+    <!--<configuration>-->
+
+    <!--<executable>java</executable>-->
+
+    <!--<includeProjectDependencies>true</includeProjectDependencies>-->
+    <!--<includePluginDependencies>false</includePluginDependencies>-->
+    <!--<classpathScope>compile</classpathScope>-->
+    <!--&lt;!&ndash; allows you to specify which topology class to run by specifying -Dexec.MainClass= on the command line &ndash;&gt;-->
+    <!--<mainClass>HealthMonitorTopologyDemo</mainClass>-->
+    <!--</configuration>-->
+    <!--</plugin>-->
+
+    <!--<plugin>-->
+    <!--<artifactId>maven-assembly-plugin</artifactId>-->
+    <!--<version>2.2</version>-->
+    <!--<configuration>-->
+    <!--<descriptorRefs>-->
+    <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
+    <!--</descriptorRefs>-->
+    <!--<archive>-->
+    <!--<index>true</index>-->
+    <!--<manifest>-->
+    <!--<addDefaultImplementationEntries>true</addDefaultImplementationEntries>-->
+    <!--<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>-->
+    <!--<mainClass>HealthMonitorTopologyDemo</mainClass>-->
+    <!--</manifest>-->
+    <!--&lt;!&ndash;<manifestEntries>&ndash;&gt;-->
+    <!--&lt;!&ndash;<Premain-Class>Agent</Premain-Class>&ndash;&gt;-->
+    <!--&lt;!&ndash;</manifestEntries>&ndash;&gt;-->
+    <!--</archive>-->
+    <!--</configuration>-->
+    <!--<executions>-->
+    <!--<execution>-->
+    <!--<id>make-assembly</id>-->
+    <!--&lt;!&ndash; this is used for inheritance merges &ndash;&gt;-->
+    <!--<phase>package</phase>-->
+    <!--&lt;!&ndash; append to the packaging phase. &ndash;&gt;-->
+    <!--<goals>-->
+    <!--<goal>single</goal>-->
+    <!--&lt;!&ndash; goals == mojos &ndash;&gt;-->
+    <!--</goals>-->
+    <!--</execution>-->
+    <!--</executions>-->
+    <!--</plugin>-->
+    <!--<plugin>-->
+    <!--<groupId>org.apache.maven.plugins</groupId>-->
+    <!--<artifactId>maven-compiler-plugin</artifactId>-->
+    <!--<configuration>-->
+    <!--<source>1.8</source>-->
+    <!--<target>1.8</target>-->
+    <!--</configuration>-->
+    <!--</plugin>-->
+    <!--</plugins>-->
+    <!--</build>-->
 
 </project>
