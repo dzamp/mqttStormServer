@@ -4,6 +4,7 @@ import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.SpoutDeclarer;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
@@ -49,33 +50,34 @@ public class HealthMonitorTopologyDemo {
 
 
 
-        conf.setNumWorkers(1);
-        conf.setMaxSpoutPending(500000);
-            StormSubmitter.submitTopologyWithProgressBar(args[0], conf, prepareWordCountTopology().createTopology());
-        // } else {
-        //     LocalCluster cluster = new LocalCluster();
-        //     cluster.submitTopology("test", conf, builder.createTopology());
-        //     Utils.sleep(100000000);
-        //     Runtime.getRuntime().addShutdownHook(new Thread() {
-        //         public void run() {
-        //             System.out.println("Shutdown--------------------------");
-        //             keepRunning = false;
-        //             // mongoConnectorProcess.destroyProcess();
-        //             try {
-        //                 mainThread.join();
-        //             } catch (InterruptedException e) {
-        //                 e.printStackTrace();
-        //             }
-        //             cluster.killTopology("test");
-        //             cluster.shutdown();
-        //         }
-        //     });
+//        conf.setNumWorkers(1);
+//        conf.setMaxSpoutPending(500000);
+//            StormSubmitter.submitTopologyWithProgressBar(args[0], conf, prepareWordCountTopology().createTopology());
+//         } else {
+             LocalCluster cluster = new LocalCluster();
+             cluster.submitTopology("test", conf, prepareHealthMonitorTopology().createTopology());
+             Utils.sleep(100000000);
+             Runtime.getRuntime().addShutdownHook(new Thread() {
+                 public void run() {
+                     System.out.println("Shutdown--------------------------");
+                     keepRunning = false;
+                     // mongoConnectorProcess.destroyProcess();
+                     try {
+                         mainThread.join();
+                     } catch (InterruptedException e) {
+                         e.printStackTrace();
+                     }
+                     cluster.killTopology("test");
+                     cluster.shutdown();
+                 }
+             });
         // }
     }
 
     static TopologyBuilder prepareWordCountTopology() {
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("spout-1",new RandomWordSpout(new String[]{"word"}),2);
+        SpoutDeclarer spoutDeclarer = builder.setSpout("spout-1",new RandomWordSpout(new String[]{"word"}),2);
+
         builder.setBolt("spout-1 ---> bolt-1",new WordCounter(),2).fieldsGrouping("spout-1",new Fields("word"));
         return builder;
     }

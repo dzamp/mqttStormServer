@@ -1,4 +1,4 @@
-package fusion_demo;
+package timestamp_join;
 
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -6,23 +6,24 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichSpout;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
+import org.apache.storm.utils.Utils;
 
+import java.sql.Timestamp;
 import java.util.Map;
 
-/**
- * Created by jim on 1/9/2017.
- */
 public class RandomWordSpout extends BaseRichSpout {
 
     String[] words = new String[]{"The", "brown", "fox", "quick", "jump", "sucky", "5dolla"};
     SpoutOutputCollector collector;
     private String[] emmitedFields;
 
-
     public RandomWordSpout(String[] emmitedFields) {
         this.emmitedFields = emmitedFields;
     }
 
+    public RandomWordSpout() {
+        this.emmitedFields = new String[]{"word", "timestamp"};
+    }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
@@ -36,14 +37,10 @@ public class RandomWordSpout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
-        while (true) {
-            int rnd = (int) (Math.random() * 10 % words.length);
-            collector.emit(new Values(words[rnd]));
-            try {
-                Thread.currentThread().sleep(300);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        Utils.sleep(300);
+        int rnd = (int) (Math.random() * 10 % words.length);
+        collector.emit(new Values(words[rnd], new Timestamp(System.currentTimeMillis()% 1000).getTime()));
+
+
     }
 }
