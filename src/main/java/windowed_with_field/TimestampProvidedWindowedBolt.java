@@ -6,21 +6,25 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.base.BaseWindowedBolt;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 import org.apache.storm.windowing.TupleWindow;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TimestampProvidedWindowedBolt extends BaseWindowedBolt {
     long previousInvocation=0;
     Set<String> streamNames = new HashSet<>();
+    TopologyContext ctx;
+    private OutputCollector collector;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
         Map<GlobalStreamId,Grouping> sources  = context.getThisSources();
         Set<String> streams = context.getThisStreams();
+        this.ctx = context;
+        this.collector = collector;
+        Map<String,Map<String,List<String>>> map =  context.getThisInputFields();
         System.out.println("dawdaw");
 
     }
@@ -45,9 +49,22 @@ public class TimestampProvidedWindowedBolt extends BaseWindowedBolt {
         for(Tuple t : inputWindow.get()){
             streamNames.add(t.getSourceComponent());
         }
-
+        Map<String,List<Values>> streamValues = new HashMap<>();
+        Set<String> streams = ctx.getThisInputFields().keySet();
+        for(String stream: streams) {
+            //construct the entries in the map
+            streamValues.put(stream,new ArrayList<>());
+        }
+        for(Tuple tuple: inputWindow.get()){
+            String streamName = tuple.getSourceComponent();
+            Values vals = new Values(tuple.getValues());
+                streamValues.get(tuple.getSourceComponent()).add(new Values(tuple.getValues()));
+        }
+        inputWindow.get().forEach(tuple -> streamValues.get(tuple.getSourceComponent()).add(new Values(tuple.getValues())););
+        System.out.println("ehehe");
         streamNames.forEach(s -> System.out.println(s));
-
-    }
+//        inputWindow.get().forEach(tuple -> );
+//        this.collector.emit(new Values(streamValues));
+   }
 
 }
