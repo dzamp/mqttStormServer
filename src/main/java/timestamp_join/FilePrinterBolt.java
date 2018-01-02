@@ -12,6 +12,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class FilePrinterBolt extends BaseRichBolt {
@@ -34,10 +36,12 @@ public class FilePrinterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
+        System.out.println("fwdfwef");
         Fields fields = input.getFields();
-        String[] fieldNames = fields.toList().toArray(new String[0]);
-        String value = input.getStringByField(fieldNames[0])+ ", "+ input.getStringByField(fieldNames[1] /*+ ", " + ((Timestamp)input.getValueByField(fieldNames[2])).getTime()*/);
-        writer.println(value);
+        List<Object> objs = (ArrayList<Object>)input.getValue(0);
+//        String[] fieldNames = fields.toList().toArray(new String[0]);
+//        String value = input.getStringByField(fieldNames[0])+ ", "+ input.getStringByField(fieldNames[1] /*+ ", " + ((Timestamp)input.getValueByField(fieldNames[2])).getTime()*/);
+        writer.println("hey");
     }
 
     @Override
