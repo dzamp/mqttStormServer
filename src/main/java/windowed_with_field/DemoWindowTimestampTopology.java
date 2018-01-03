@@ -5,6 +5,7 @@ import org.apache.storm.LocalCluster;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.topology.base.BaseWindowedBolt;
 import org.apache.storm.utils.Utils;
+import timestamp_join.FilePrinterBolt;
 
 public class DemoWindowTimestampTopology {
 
@@ -25,12 +26,11 @@ public class DemoWindowTimestampTopology {
                 .withWindow(BaseWindowedBolt.Duration.seconds(30), BaseWindowedBolt.Duration.seconds(10));
 
 
-
         builder.setBolt("window", windowBolt,1)
                 .shuffleGrouping("uuid-spout")
                 .shuffleGrouping("word-spout");
 
-//        builder.setBolt("fileWriter",new FilePrinterBolt(),1).globalGrouping("window");
+        builder.setBolt("fileWriter",new FilePrinterBolt(),1).shuffleGrouping("window");
 ////        builder.setBolt("join",
 
         LocalCluster cluster = new LocalCluster();
